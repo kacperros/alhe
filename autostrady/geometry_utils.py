@@ -33,3 +33,7 @@ def _get_distance_between_points_squared(point_1, point_2):
 
 def _2dvector_len(vect):
     return math.sqrt(vect[0] ** 2 + vect[1] ** 2)
+
+
+def get_distance_between_points(p1, p2):
+    return math.sqrt(_get_distance_between_points_squared(p1, p2))
