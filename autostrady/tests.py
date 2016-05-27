@@ -1,13 +1,13 @@
 import geometry_utils
+from model import Point
+from evolutionary_highways import EvolutionaryHighways
+import numpy as np
 
-points = [[4, 3], [3, 8], [10, 0]]
-print(geometry_utils.get_distance_point_to_segment(points[1], points[2], points[0]))
 
-points = [[1, 1], [3, 8], [10, 0]]
-print(geometry_utils.get_distance_point_to_segment(points[1], points[2], points[0]))
-
-points = [[1, 1], [3, 8], [10, 10]]
-print(geometry_utils.get_distance_point_to_segment(points[1], points[2], points[0]))
-
-points = [[4, 3], [3, 8], [10, 0]]
-print(geometry_utils.get_distance_point_to_segment(points[1], points[2], points[0]))
+test = EvolutionaryHighways()
+selected_map = test.select_best_map(125, 40000, 50, 20)
+selected_map.print_self()
+maps = test.maps
+print("---------------------------------------------")
+for single_map in maps:
+    single_map.print_self()
