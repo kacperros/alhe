@@ -5,6 +5,7 @@ from model import Point, Highway, Map
 import numpy
 import math
 
+
 class EvolutionaryHighways:
     def __init__(self):
         self.cities = []
@@ -13,6 +14,18 @@ class EvolutionaryHighways:
         self.y_max = 0
         self.x_min = 0
         self.y_min = 0
+
+    def select_best_map_with_improvement(self, population_size, max_iterations, highway_km_cost, route_km_cost,
+                                         num_analyzed, connect):
+        self.select_best_map(population_size, max_iterations, highway_km_cost, route_km_cost)
+        improved_maps = self.maps[:num_analyzed]
+        for improved_map in self.maps[:num_analyzed]:
+            improved_map.improve_map()
+        if connect:
+            for improved_map in improved_maps:
+                improved_map.connect_map()
+        self.maps.sort(key=lambda x: x.cost)
+        return self.maps[0]
 
     def select_best_map(self, population_size, max_iterations, highway_km_cost, route_km_cost):
         self.read_cities()
@@ -83,14 +96,12 @@ class EvolutionaryHighways:
             return False
 
     def _get_best_map_from_current_population(self):
+        self.maps.sort(key=lambda x: x.cost)
         best_map = self.maps[0]
-        for checked_map in self.maps:
-            if checked_map.cost < best_map.cost:
-                best_map = checked_map
         return best_map
 
     def _evolve_population(self, population_size):
-        parents = self.__pair_parents(int(population_size/3))
+        parents = self.__pair_parents(int(population_size / 3))
         children = self.__breed_children(parents)
         children = self.__mutate_children(children)
         mutated_parents = self.__mutate_parents()
@@ -107,7 +118,7 @@ class EvolutionaryHighways:
         for single_map in self.maps:
             max_cost = max(single_map.cost, max_cost)
         for single_map in self.maps:
-            added_maps = [single_map] * int(single_map.cost * 10/max_cost)
+            added_maps = [single_map] * int(single_map.cost * 10 / max_cost)
             parents_origin.extend(added_maps)
         for i in range(0, number_of_families):
             parents_chosen = numpy.random.choice(parents_origin, 2)
@@ -125,13 +136,13 @@ class EvolutionaryHighways:
         parent1 = parents_pair[0]
         parent2 = parents_pair[1]
         merged_highways = geometry_utils.get_average_lines(parent1.highways, parent2.highways,
-                                                           parent1.cost/(parent2.cost+parent1.cost))
+                                                           parent1.cost / (parent2.cost + parent1.cost))
         child = Map(merged_highways, parent1.cities, parent1.highway_km_cost, parent1.route_km_cost)
         return child
 
     def __mutate_children(self, children):
         for child in children:
-            if 0.90 < numpy.random.random():
+            if 0.80 < numpy.random.random():
                 if 0.7 < numpy.random.random():
                     child.add_highway(self._get_random_highway_in_bounds())
                 else:
@@ -141,13 +152,14 @@ class EvolutionaryHighways:
     def __mutate_parents(self):
         mutated_parents = []
         for curr_map in self.maps:
-            if 0.90 < numpy.random.random():
+            if 0.80 < numpy.random.random():
                 mutated_highways = []
                 for highway in curr_map.highways:
-                    start_x = highway.start.x + (self.x_max-self.x_min) * random.random()
+                    start_x = highway.start.x + (self.x_max - self.x_min) * random.random()
                     start_y = highway.start.y + (self.y_max - self.y_min) * random.random()
                     end_x = highway.end.x + (self.x_max - self.x_min) * random.random()
                     end_y = highway.end.y + (self.y_max - self.y_min) * random.random()
                     mutated_highways.append(Highway(Point(start_x, start_y), Point(end_x, end_y)))
-                mutated_parents.append(Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost, curr_map.route_km_cost))
+                mutated_parents.append(
+                    Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost, curr_map.route_km_cost))
         return mutated_parents
