@@ -24,8 +24,8 @@ class EvolutionaryHighways:
         if connect:
             for improved_map in improved_maps:
                 improved_map.connect_map()
-        self.maps.sort(key=lambda x: x.cost)
-        return self.maps[0]
+        improved_maps.sort(key=lambda x: x.cost)
+        return improved_maps[0]
 
     def select_best_map(self, population_size, max_iterations, highway_km_cost, route_km_cost):
         self.read_cities()
