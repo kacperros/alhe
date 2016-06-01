@@ -14,20 +14,24 @@ class Highway:
         self.start = start_point
         self.end = end_point
         self.cost = float('Inf')
-        self.turns = []
+        self.turns = [start_point, end_point]
         self.connected = False
+
+    def get_length(self):
+        return geometry_utils.get_distance_between_points(self.start, self.end)
 
     def print_self(self):
         print('Highway:\t start: x: ', self.start.x, ' y: ', self.start.y, '\t end: x: ', self.end.x, 'y: ', self.end.y)
 
 
 class Map:
-    def __init__(self, highways, cities, highway_km_cost, route_km_cost):
+    def __init__(self, highways, cities, highway_km_cost, route_km_cost, turn_cost):
         self.highways = highways
         self.cities = cities
         self.highway_km_cost = highway_km_cost
         self.route_km_cost = route_km_cost
         self.cost = 0
+        self.turn_cost = turn_cost
         self.calculate_highways_costs()
 
     def calculate_highways_costs(self):
@@ -37,9 +41,27 @@ class Map:
             cost += self.__get_distance_to_closest_highway(city)
         cost = cost * self.route_km_cost
         for highway in self.highways:
-            distance += geometry_utils.get_distance_between_points(highway.start, highway.end)
+            distance += highway.get_length()
         cost += distance * self.highway_km_cost
         self.cost = cost
+
+    def calculate_total_cost(self):
+        highways_length = 0
+        route_length = 0
+        turns = self.__get_turns()
+        for highway in self.highways:
+            highways_length += highway.get_length()
+        for city in self.cities:
+            closest_turn = geometry_utils.find_closest_point(city, len(turns))
+            route_length += geometry_utils.get_distance_between_points(city, closest_turn)
+        self.cost = highways_length * self.highway_km_cost + route_length * self.route_km_cost \
+                    + len(turns) * self.turn_cost
+
+    def __get_turns(self):
+        turns = []
+        for highway in self.highways:
+            turns.extend(highway.turns)
+        return turns
 
     def __get_distance_to_closest_highway(self, city):
         min_distance = float('Inf')
