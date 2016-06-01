@@ -16,8 +16,8 @@ class EvolutionaryHighways:
         self.y_min = 0
 
     def select_best_map_with_improvement(self, population_size, max_iterations, highway_km_cost, route_km_cost,
-                                         num_analyzed, connect, turn_cost):
-        self.select_best_map(population_size, max_iterations, highway_km_cost, route_km_cost, turn_cost)
+                                         num_analyzed, connect):
+        self.select_best_map(population_size, max_iterations, highway_km_cost, route_km_cost)
         improved_maps = self.maps[:num_analyzed]
         for improved_map in self.maps[:num_analyzed]:
             improved_map.improve_map()
@@ -27,10 +27,10 @@ class EvolutionaryHighways:
         self.maps.sort(key=lambda x: x.cost)
         return self.maps[0]
 
-    def select_best_map(self, population_size, max_iterations, highway_km_cost, route_km_cost, turn_cost):
+    def select_best_map(self, population_size, max_iterations, highway_km_cost, route_km_cost):
         self.read_cities()
         self._get_bounds()
-        self._generate_start_population(population_size, highway_km_cost, route_km_cost, turn_cost)
+        self._generate_start_population(population_size, highway_km_cost, route_km_cost)
         lowest_cost = self._get_lowest_cost()
         iterations_counter = 0
         no_better_cost_counter = 0
@@ -64,10 +64,10 @@ class EvolutionaryHighways:
         self.y_min = min_y
         self.y_max = max_y
 
-    def _generate_start_population(self, size, highway_km_cost, route_km_cost, turn_cost):
+    def _generate_start_population(self, size, highway_km_cost, route_km_cost):
         for i in range(0, size):
             starting_highway = self._get_random_highway_in_bounds()
-            created_map = Map([starting_highway], self.cities, highway_km_cost, route_km_cost, turn_cost)
+            created_map = Map([starting_highway], self.cities, highway_km_cost, route_km_cost)
             self.maps.append(created_map)
 
     def _get_random_highway_in_bounds(self):
@@ -137,7 +137,7 @@ class EvolutionaryHighways:
         parent2 = parents_pair[1]
         merged_highways = geometry_utils.get_average_lines(parent1.highways, parent2.highways,
                                                            parent1.cost / (parent2.cost + parent1.cost))
-        child = Map(merged_highways, parent1.cities, parent1.highway_km_cost, parent1.route_km_cost, parent1.turn_cost)
+        child = Map(merged_highways, parent1.cities, parent1.highway_km_cost, parent1.route_km_cost)
         return child
 
     def __mutate_children(self, children):
@@ -161,6 +161,5 @@ class EvolutionaryHighways:
                     end_y = highway.end.y + (self.y_max - self.y_min) * random.random()
                     mutated_highways.append(Highway(Point(start_x, start_y), Point(end_x, end_y)))
                 mutated_parents.append(
-                    Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost,
-                        curr_map.route_km_cost, curr_map.turn_cost))
+                    Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost, curr_map.route_km_cost))
         return mutated_parents
