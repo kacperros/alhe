@@ -89,6 +89,7 @@ def __get_nearest_line(line, shorter_list):
     return nearest_line
 
 
+
 def __average_two_lines(line1, line2, proportion):
     start1 = line1.start
     end1 = line1.end
