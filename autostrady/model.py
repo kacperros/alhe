@@ -68,7 +68,8 @@ class Map:
         for city in self.cities:
             closest_turn = geometry_utils.get_closest_point(city, turns)
             route_length += geometry_utils.get_distance_between_points(city, closest_turn)
-        return len(turns) * self.turn_cost + highways_length * self.highway_km_cost + route_length * self.route_km_cost
+        self.cost = len(turns) * self.turn_cost + highways_length * self.highway_km_cost + route_length * self.route_km_cost
+        return self.cost
 
     def _get_turns(self):
         turns = []
