@@ -14,10 +14,21 @@ class EvolutionaryHighways:
         self.y_max = 0
         self.x_min = 0
         self.y_min = 0
+        self.population_size = 0
+        self.max_iterations = 0
+        self.parent_mutation_chance = 0
+        self.child_mutation_chance = 0
+        self.child_add_highway_chance = 0
 
-    def select_best_map_with_improvement(self, population_size, max_iterations, highway_km_cost, route_km_cost,
-                                         num_analyzed, connect):
-        self.select_best_map(population_size, max_iterations, highway_km_cost, route_km_cost)
+    def select_best_map_with_improvement(self, population_size, max_iterations, highway_km_cost, route_km_cost, turn_cost,
+                                         num_analyzed, connect, parent_mutation_likelyhood, child_mutation_likelyhood,
+                                         child_add_highway_chance):
+        self.population_size = population_size
+        self.max_iterations = max_iterations
+        self.parent_mutation_chance = 1 - parent_mutation_likelyhood
+        self.child_mutation_chance = 1 - child_mutation_likelyhood
+        self.child_add_highway_chance = 1 - child_add_highway_chance
+        self.__select_best_map(highway_km_cost, route_km_cost, turn_cost)
         improved_maps = self.maps[:num_analyzed]
         for improved_map in self.maps[:num_analyzed]:
             improved_map.improve_map()
@@ -27,16 +38,15 @@ class EvolutionaryHighways:
         improved_maps.sort(key=lambda x: x.cost)
         return improved_maps[0]
 
-    def select_best_map(self, population_size, max_iterations, highway_km_cost, route_km_cost):
+    def __select_best_map(self, highway_km_cost, route_km_cost, turn_cost):
         self.read_cities()
         self._get_bounds()
-        self._generate_start_population(population_size, highway_km_cost, route_km_cost)
+        self._generate_start_population(highway_km_cost, route_km_cost, turn_cost)
         lowest_cost = self._get_lowest_cost()
         iterations_counter = 0
         no_better_cost_counter = 0
-        while iterations_counter < max_iterations and no_better_cost_counter < 100:
-            print('Iteration number: ', iterations_counter)
-            self._evolve_population(population_size)
+        while iterations_counter < self.max_iterations and no_better_cost_counter < 100:
+            self._evolve_population()
             if self._cost_improved(lowest_cost):
                 no_better_cost_counter = 0
             iterations_counter += 1
@@ -64,10 +74,10 @@ class EvolutionaryHighways:
         self.y_min = min_y
         self.y_max = max_y
 
-    def _generate_start_population(self, size, highway_km_cost, route_km_cost):
-        for i in range(0, size):
+    def _generate_start_population(self, highway_km_cost, route_km_cost, turn_cost):
+        for i in range(0, self.population_size):
             starting_highway = self._get_random_highway_in_bounds()
-            created_map = Map([starting_highway], self.cities, highway_km_cost, route_km_cost)
+            created_map = Map([starting_highway], self.cities, highway_km_cost, route_km_cost, turn_cost)
             self.maps.append(created_map)
 
     def _get_random_highway_in_bounds(self):
@@ -100,16 +110,15 @@ class EvolutionaryHighways:
         best_map = self.maps[0]
         return best_map
 
-    def _evolve_population(self, population_size):
-        parents = self.__pair_parents(int(population_size / 3))
+    def _evolve_population(self):
+        parents = self.__pair_parents(int(self.population_size / 3))
         children = self.__breed_children(parents)
         children = self.__mutate_children(children)
         mutated_parents = self.__mutate_parents()
         self.maps.extend(children)
         self.maps.extend(mutated_parents)
-        # self.maps = list(set(self.maps))
         self.maps.sort(key=lambda x: x.cost)
-        self.maps = self.maps[:population_size]
+        self.maps = self.maps[:self.population_size]
 
     def __pair_parents(self, number_of_families):
         parents_origin = []
@@ -137,13 +146,13 @@ class EvolutionaryHighways:
         parent2 = parents_pair[1]
         merged_highways = geometry_utils.get_average_lines(parent1.highways, parent2.highways,
                                                            parent1.cost / (parent2.cost + parent1.cost))
-        child = Map(merged_highways, parent1.cities, parent1.highway_km_cost, parent1.route_km_cost)
+        child = Map(merged_highways, parent1.cities, parent1.highway_km_cost, parent1.route_km_cost, parent1.turn_cost)
         return child
 
     def __mutate_children(self, children):
         for child in children:
-            if 0.80 < numpy.random.random():
-                if 0.7 < numpy.random.random():
+            if self.child_mutation_chance < numpy.random.random():
+                if self.child_add_highway_chance < numpy.random.random():
                     child.add_highway(self._get_random_highway_in_bounds())
                 else:
                     child.rem_random_highway()
@@ -152,7 +161,7 @@ class EvolutionaryHighways:
     def __mutate_parents(self):
         mutated_parents = []
         for curr_map in self.maps:
-            if 0.80 < numpy.random.random():
+            if self.parent_mutation_chance < numpy.random.random():
                 mutated_highways = []
                 for highway in curr_map.highways:
                     start_x = highway.start.x + (self.x_max - self.x_min) * random.random()
@@ -161,5 +170,5 @@ class EvolutionaryHighways:
                     end_y = highway.end.y + (self.y_max - self.y_min) * random.random()
                     mutated_highways.append(Highway(Point(start_x, start_y), Point(end_x, end_y)))
                 mutated_parents.append(
-                    Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost, curr_map.route_km_cost))
+                    Map(mutated_highways, curr_map.cities, curr_map.highway_km_cost, curr_map.route_km_cost, curr_map.turn_cost))
         return mutated_parents

@@ -14,19 +14,37 @@ class Highway:
         self.start = start_point
         self.end = end_point
         self.cost = float('Inf')
-        self.turns = []
+        self.turns = [self.start, self.end]
         self.connected = False
+
+    def get_length(self):
+        return geometry_utils.get_distance_between_points(self.start, self.end)
+
+    def append_random_turn(self, min_dist):
+        bounding_points_list = []
+        if min_dist < geometry_utils.get_distance_between_points(self.start, self.end):
+            for point_start in self.turns:
+                for point_end in self.turns:
+                    if point_start != point_end:
+                        bounding_points_list.append(geometry_utils.get_bounding_points(point_start, point_end, min_dist))
+            bounding_points = bounding_points_list[random.randint(0, len(bounding_points_list) - 1)]
+            appended = geometry_utils.get_point_in_between_points(bounding_points[0],
+                                                                              bounding_points[1], random.random())
+            self.turns.append(appended)
 
     def print_self(self):
         print('Highway:\t start: x: ', self.start.x, ' y: ', self.start.y, '\t end: x: ', self.end.x, 'y: ', self.end.y)
+        for turn in self.turns:
+            print('\t Gateway: x: ', turn.x, 'y: ', turn.y)
 
 
 class Map:
-    def __init__(self, highways, cities, highway_km_cost, route_km_cost):
+    def __init__(self, highways, cities, highway_km_cost, route_km_cost, turn_cost):
         self.highways = highways
         self.cities = cities
         self.highway_km_cost = highway_km_cost
         self.route_km_cost = route_km_cost
+        self.turn_cost = turn_cost
         self.cost = 0
         self.calculate_highways_costs()
 
@@ -37,9 +55,27 @@ class Map:
             cost += self.__get_distance_to_closest_highway(city)
         cost = cost * self.route_km_cost
         for highway in self.highways:
-            distance += geometry_utils.get_distance_between_points(highway.start, highway.end)
+            distance += highway.get_length()
         cost += distance * self.highway_km_cost
         self.cost = cost
+
+    def calculate_highways_with_turns_costs(self):
+        turns = self._get_turns()
+        highways_length = 0
+        route_length = 0
+        for highway in self.highways:
+            highways_length += highway.get_length()
+        for city in self.cities:
+            closest_turn = geometry_utils.get_closest_point(city, turns)
+            route_length += geometry_utils.get_distance_between_points(city, closest_turn)
+        self.cost = len(turns) * self.turn_cost + highways_length * self.highway_km_cost + route_length * self.route_km_cost
+        return self.cost
+
+    def _get_turns(self):
+        turns = []
+        for highway in self.highways:
+            turns.extend(highway.turns)
+        return turns
 
     def __get_distance_to_closest_highway(self, city):
         min_distance = float('Inf')

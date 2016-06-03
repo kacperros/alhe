@@ -89,7 +89,6 @@ def __get_nearest_line(line, shorter_list):
     return nearest_line
 
 
-
 def __average_two_lines(line1, line2, proportion):
     start1 = line1.start
     end1 = line1.end
@@ -104,3 +103,20 @@ def __average_two_lines(line1, line2, proportion):
     merged_start = get_point_in_between_points(start1, start2, proportion)
     merged_end = get_point_in_between_points(end1, end2, proportion)
     return Highway(merged_start, merged_end)
+
+
+def get_closest_point(point, searched_points):
+    closest_point = searched_points[0]
+    shortest_distance = float('Inf')
+    for checked_point in searched_points:
+        distance = get_distance_between_points(point, checked_point)
+        if distance < shortest_distance and checked_point != point:
+            shortest_distance = distance
+            closest_point = checked_point
+    return closest_point
+
+def get_bounding_points(seg_start, seg_end, min_dist):
+    ratio = min_dist/get_distance_between_points(seg_start, seg_end)
+    point1 = get_point_in_between_points(seg_start, seg_end, ratio)
+    point2 = get_point_in_between_points(seg_start, seg_end, 1 - ratio)
+    return (point1, point2)
