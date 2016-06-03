@@ -16,6 +16,7 @@ child_mut_chance = [0.2, 0.5, 0.8]
 child_add_highway_chance = [0.3, 0.5, 0.7, 0.9]
 turn_mut_chance = [0.1, 0.4, 0.7, 0.9]
 
+
 for pmc in parent_mut_chance:
     for cmc in child_mut_chance:
         for cahc in child_add_highway_chance:
